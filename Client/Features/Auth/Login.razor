@@ -1,10 +1,13 @@
+@page "/"
 @page "/login"
 @layout BlankLayout
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Forms
 @using MudBlazor
 @inject IAuthService AuthService
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 
@@ -68,11 +71,17 @@
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         _editContext = new EditContext(_model);
         _model.Email = "admin@sampleblazor.dev";
         _model.Password = "Admin123!";
+
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authenticationState.User.Identity?.IsAuthenticated == true)
+        {
+            NavigationManager.NavigateTo("/dashboard", true);
+        }
     }
 
     private async Task SubmitAsync()
@@ -96,7 +105,7 @@
         }
 
         Snackbar.Add("Signed in successfully.", Severity.Success);
-        NavigationManager.NavigateTo(string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : $"/{ReturnUrl.TrimStart('/')}", true);
+        NavigationManager.NavigateTo(string.IsNullOrWhiteSpace(ReturnUrl) ? "/dashboard" : $"/{ReturnUrl.TrimStart('/')}", true);
     }
 
     private void TogglePassword()
