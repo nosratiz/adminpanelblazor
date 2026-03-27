@@ -25,8 +25,6 @@ jobs:
         run: dotnet publish Client/Client.csproj -c Release
 
       - name: Prepare GitHub Pages artifacts
-        env:
-          REPOSITORY_NAME: ${{ github.event.repository.name }}
         run: |
           PUBLISH_DIR=$(find Client/bin/Release -type d -path '*/publish/wwwroot' | head -n 1)
 
@@ -37,8 +35,10 @@ jobs:
 
           echo "PUBLISH_DIR=$PUBLISH_DIR" >> "$GITHUB_ENV"
           touch "$PUBLISH_DIR/.nojekyll"
-          sed -i "s#<base href=\"/\" />#<base href=\"/${REPOSITORY_NAME}/\" />#" "$PUBLISH_DIR/index.html"
-          sed -i "s#<base href=\"/\" />#<base href=\"/${REPOSITORY_NAME}/\" />#" "$PUBLISH_DIR/404.html"
+
+          if [ ! -f "$PUBLISH_DIR/404.html" ]; then
+            cp "$PUBLISH_DIR/index.html" "$PUBLISH_DIR/404.html"
+          fi
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
