@@ -4,9 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SampleBlazor Admin</title>
-    <base href="/" />
+    <base href="/adminpanelblazor/" />
     <script>
-        var pathSegmentsToKeep = 0;
+        var basePath = document.querySelector("base").getAttribute("href");
+        var pathSegmentsToKeep = basePath
+            .replace(/^\/+|\/+$/g, "")
+            .split("/")
+            .filter(Boolean)
+            .length;
         var locationData = window.location;
         var redirectPath = locationData.pathname
             .slice(1)
