@@ -110,6 +110,8 @@ Update that value to point to your backend API.
 
 ## Demo Mode
 
+Live demo: https://nosratiz.github.io/adminpanelblazor/
+
 If the API is not running, you can still explore the app with the built-in demo credentials:
 
 - Email: `admin@sampleblazor.dev`
