@@ -1,0 +1,87 @@
+@page "/orders"
+@attribute [Authorize]
+@inject IOrdersApiClient OrdersApiClient
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<PageHeader Title="Orders" Subtitle="Fulfillment visibility and customer order monitoring.">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.PostAdd" OnClick="OpenCreateOrder">
+            Add order
+        </MudButton>
+    </Actions>
+</PageHeader>
+
+<MudPaper Class="surface-panel table-host">
+    <MudDataGrid @ref="_dataGrid" T="OrderDto" ServerData="LoadOrdersAsync" Dense="true" Hover="true" Filterable="true" FilterMode="DataGridFilterMode.ColumnFilterRow" SortMode="SortMode.Multiple" Elevation="0">
+        <ToolBarContent>
+            <div class="search-toolbar">
+                <MudText Typo="Typo.h6">Order feed</MudText>
+                <MudSpacer />
+                <MudTextField T="string" Value="@_searchText" ValueChanged="OnSearchChanged" Placeholder="Search orders" Variant="Variant.Outlined" Immediate="true" DebounceInterval="300" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" />
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Refresh" OnClick="ReloadAsync">Refresh</MudButton>
+            </div>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="x => x.Number" Title="Order" />
+            <PropertyColumn Property="x => x.Customer" Title="Customer" />
+            <PropertyColumn Property="x => x.Total" Title="Total" Format="C" />
+            <PropertyColumn Property="x => x.FulfillmentStatus" Title="Status" />
+            <PropertyColumn Property="x => x.CreatedUtc" Title="Created" Format="g" />
+            <TemplateColumn Title="Actions" Sortable="false" Filterable="false">
+                <CellTemplate>
+                    <MudStack Row="true" Spacing="1">
+                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" OnClick="@(() => EditOrder(context.Item))" />
+                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteOrderAsync(context.Item))" />
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="OrderDto" PageSizeOptions="@(new[] { 10, 20, 50 })" />
+        </PagerContent>
+    </MudDataGrid>
+</MudPaper>
+
+@code {
+    private MudDataGrid<OrderDto>? _dataGrid;
+    private string? _searchText;
+
+    private async Task<GridData<OrderDto>> LoadOrdersAsync(GridState<OrderDto> state)
+    {
+        var result = await OrdersApiClient.GetOrdersAsync(new GridQueryRequest
+        {
+            Page = state.Page + 1,
+            PageSize = state.PageSize,
+            SearchTerm = _searchText,
+            Sorts = state.SortDefinitions.Select(sort => new SortDescriptor { Field = sort.SortBy, Descending = sort.Descending }).ToList()
+        });
+
+        return new GridData<OrderDto> { Items = result.Items, TotalItems = result.TotalCount };
+    }
+
+    private Task OnSearchChanged(string value)
+    {
+        _searchText = value;
+        return ReloadAsync();
+    }
+
+    private Task ReloadAsync() => _dataGrid?.ReloadServerData() ?? Task.CompletedTask;
+
+    private void OpenCreateOrder()
+    {
+        NavigationManager.NavigateTo("/orders/create");
+    }
+
+    private void EditOrder(OrderDto order)
+    {
+        NavigationManager.NavigateTo($"/orders/{order.Id}/edit");
+    }
+
+    private async Task DeleteOrderAsync(OrderDto order)
+    {
+        await OrdersApiClient.DeleteOrderAsync(order.Id);
+        Snackbar.Add($"Deleted {order.Number}.", Severity.Warning);
+        await ReloadAsync();
+    }
+}

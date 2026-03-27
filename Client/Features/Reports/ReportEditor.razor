@@ -1,0 +1,100 @@
+@page "/reports/create"
+@page "/reports/{Id:guid}/edit"
+@attribute [Authorize]
+@inject IReportsApiClient ReportsApiClient
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageHeader Title="@PageTitle" Subtitle="Manage report definitions on a dedicated editor page." />
+
+<InlineEditorPanel Title="@PageTitle" Subtitle="Create or update report schedules and ownership metadata." EditContext="@_editContext" OnValidSubmit="SaveAsync" OnCancel="Cancel" SaveText="Save report" IsBusy="_isSaving">
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_model.Name" For="@(() => _model.Name)" Label="Name" Variant="Variant.Outlined" Required="true" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_model.Owner" For="@(() => _model.Owner)" Label="Owner" Variant="Variant.Outlined" Required="true" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudSelect T="string" @bind-Value="_model.Frequency" Label="Frequency" Variant="Variant.Outlined">
+                @foreach (var frequency in FrequencyOptions)
+                {
+                    <MudSelectItem Value="@frequency">@frequency</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudSelect T="string" @bind-Value="_model.Status" Label="Status" Variant="Variant.Outlined">
+                @foreach (var status in StatusOptions)
+                {
+                    <MudSelectItem Value="@status">@status</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+</InlineEditorPanel>
+
+@code {
+    [Parameter]
+    public Guid? Id { get; set; }
+
+    private readonly UpsertReportDefinitionRequest _model = new();
+    private EditContext _editContext = default!;
+    private bool _isSaving;
+    private string PageTitle => Id.HasValue ? "Edit Report" : "Create Report";
+    private static readonly string[] FrequencyOptions = ["Daily", "Weekly", "Monthly"];
+    private static readonly string[] StatusOptions = ["Healthy", "Needs review", "Paused"];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _editContext = new EditContext(_model);
+        _model.Frequency = FrequencyOptions[0];
+        _model.Status = StatusOptions[0];
+
+        if (!Id.HasValue)
+        {
+            return;
+        }
+
+        var report = await ReportsApiClient.GetReportAsync(Id.Value);
+        if (report is null)
+        {
+            Snackbar.Add("Report not found.", Severity.Error);
+            NavigationManager.NavigateTo("/reports");
+            return;
+        }
+
+        _model.Id = report.Id;
+        _model.Name = report.Name;
+        _model.Owner = report.Owner;
+        _model.Frequency = report.Frequency;
+        _model.Status = report.Status;
+        _model.LastRunUtc = report.LastRunUtc;
+        _editContext = new EditContext(_model);
+    }
+
+    private async Task SaveAsync()
+    {
+        _isSaving = true;
+        _model.LastRunUtc = DateTime.UtcNow;
+
+        if (Id.HasValue)
+        {
+            await ReportsApiClient.UpdateReportAsync(Id.Value, _model);
+            Snackbar.Add("Report updated.", Severity.Success);
+        }
+        else
+        {
+            await ReportsApiClient.CreateReportAsync(_model);
+            Snackbar.Add("Report created.", Severity.Success);
+        }
+
+        _isSaving = false;
+        NavigationManager.NavigateTo("/reports");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/reports");
+    }
+}

@@ -1,0 +1,96 @@
+@page "/products/create"
+@page "/products/{Id:guid}/edit"
+@attribute [Authorize]
+@inject IProductsApiClient ProductsApiClient
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageHeader Title="@PageTitle" Subtitle="Manage catalog items on a dedicated editor page." />
+
+<InlineEditorPanel Title="@PageTitle" Subtitle="Create or update sellable catalog items." EditContext="@_editContext" OnValidSubmit="SaveAsync" OnCancel="Cancel" SaveText="Save product" IsBusy="_isSaving">
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_model.Sku" For="@(() => _model.Sku)" Label="SKU" Variant="Variant.Outlined" Required="true" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_model.Name" For="@(() => _model.Name)" Label="Name" Variant="Variant.Outlined" Required="true" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudNumericField T="decimal" @bind-Value="_model.Price" For="@(() => _model.Price)" Label="Price" Variant="Variant.Outlined" Min="0" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudNumericField T="int" @bind-Value="_model.Stock" For="@(() => _model.Stock)" Label="Stock" Variant="Variant.Outlined" Min="0" />
+        </MudItem>
+        <MudItem xs="12">
+            <MudSelect T="string" @bind-Value="_model.Status" Label="Status" Variant="Variant.Outlined">
+                @foreach (var status in StatusOptions)
+                {
+                    <MudSelectItem Value="@status">@status</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+</InlineEditorPanel>
+
+@code {
+    [Parameter]
+    public Guid? Id { get; set; }
+
+    private readonly UpsertProductRequest _model = new();
+    private EditContext _editContext = default!;
+    private bool _isSaving;
+    private string PageTitle => Id.HasValue ? "Edit Product" : "Create Product";
+    private static readonly string[] StatusOptions = ["Active", "Low stock", "Backorder", "Archived"];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _editContext = new EditContext(_model);
+        _model.Status = StatusOptions[0];
+        _model.Price = 1m;
+
+        if (!Id.HasValue)
+        {
+            return;
+        }
+
+        var product = await ProductsApiClient.GetProductAsync(Id.Value);
+        if (product is null)
+        {
+            Snackbar.Add("Product not found.", Severity.Error);
+            NavigationManager.NavigateTo("/products");
+            return;
+        }
+
+        _model.Id = product.Id;
+        _model.Sku = product.Sku;
+        _model.Name = product.Name;
+        _model.Price = product.Price;
+        _model.Stock = product.Stock;
+        _model.Status = product.Status;
+        _editContext = new EditContext(_model);
+    }
+
+    private async Task SaveAsync()
+    {
+        _isSaving = true;
+
+        if (Id.HasValue)
+        {
+            await ProductsApiClient.UpdateProductAsync(Id.Value, _model);
+            Snackbar.Add("Product updated.", Severity.Success);
+        }
+        else
+        {
+            await ProductsApiClient.CreateProductAsync(_model);
+            Snackbar.Add("Product created.", Severity.Success);
+        }
+
+        _isSaving = false;
+        NavigationManager.NavigateTo("/products");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/products");
+    }
+}

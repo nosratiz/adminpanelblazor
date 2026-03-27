@@ -1,0 +1,97 @@
+@page "/blog/create"
+@page "/blog/{Id:guid}/edit"
+@attribute [Authorize]
+@inject IBlogPostsApiClient BlogPostsApiClient
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageHeader Title="@PageTitle" Subtitle="Manage editorial records on a dedicated editor page." />
+
+<InlineEditorPanel Title="@PageTitle" Subtitle="Create or update blog post metadata." EditContext="@_editContext" OnValidSubmit="SaveAsync" OnCancel="Cancel" SaveText="Save post" IsBusy="_isSaving">
+    <MudGrid>
+        <MudItem xs="12">
+            <MudTextField @bind-Value="_model.Title" For="@(() => _model.Title)" Label="Title" Variant="Variant.Outlined" Required="true" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_model.Slug" For="@(() => _model.Slug)" Label="Slug" Variant="Variant.Outlined" Required="true" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_model.Author" For="@(() => _model.Author)" Label="Author" Variant="Variant.Outlined" Required="true" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_model.Category" For="@(() => _model.Category)" Label="Category" Variant="Variant.Outlined" Required="true" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudSelect T="string" @bind-Value="_model.Status" Label="Status" Variant="Variant.Outlined">
+                @foreach (var status in StatusOptions)
+                {
+                    <MudSelectItem Value="@status">@status</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+</InlineEditorPanel>
+
+@code {
+    [Parameter]
+    public Guid? Id { get; set; }
+
+    private readonly UpsertBlogPostRequest _model = new();
+    private EditContext _editContext = default!;
+    private bool _isSaving;
+    private string PageTitle => Id.HasValue ? "Edit Blog Post" : "Create Blog Post";
+    private static readonly string[] StatusOptions = ["Draft", "In Review", "Scheduled", "Published"];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _editContext = new EditContext(_model);
+        _model.Status = StatusOptions[0];
+
+        if (!Id.HasValue)
+        {
+            return;
+        }
+
+        var post = await BlogPostsApiClient.GetBlogPostAsync(Id.Value);
+        if (post is null)
+        {
+            Snackbar.Add("Post not found.", Severity.Error);
+            NavigationManager.NavigateTo("/blog");
+            return;
+        }
+
+        _model.Id = post.Id;
+        _model.Title = post.Title;
+        _model.Slug = post.Slug;
+        _model.Category = post.Category;
+        _model.Status = post.Status;
+        _model.Author = post.Author;
+        _model.PublishedUtc = post.PublishedUtc;
+        _editContext = new EditContext(_model);
+    }
+
+    private async Task SaveAsync()
+    {
+        _isSaving = true;
+        _model.PublishedUtc = _model.Status == "Published" ? DateTime.UtcNow : _model.Status == "Scheduled" ? DateTime.UtcNow.AddDays(1) : null;
+
+        if (Id.HasValue)
+        {
+            await BlogPostsApiClient.UpdateBlogPostAsync(Id.Value, _model);
+            Snackbar.Add("Post updated.", Severity.Success);
+        }
+        else
+        {
+            await BlogPostsApiClient.CreateBlogPostAsync(_model);
+            Snackbar.Add("Post created.", Severity.Success);
+        }
+
+        _isSaving = false;
+        NavigationManager.NavigateTo("/blog");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/blog");
+    }
+}

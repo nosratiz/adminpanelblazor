@@ -1,0 +1,109 @@
+@page "/blog"
+@attribute [Authorize]
+@inject IBlogPostsApiClient BlogPostsApiClient
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<PageHeader Title="Blog" Subtitle="Editorial performance, publish cadence, and content health." />
+
+<div class="panel-grid metrics">
+    <StatisticsCard Title="Weekly sessions" Value="128K" Caption="Across article and landing pages" BadgeText="+9.4%" Icon="@Icons.Material.Outlined.TrendingUp" IconColor="Color.Info" />
+    <StatisticsCard Title="Drafts" Value="@DraftCountText" Caption="Awaiting review or legal signoff" BadgeText="Content queue" Icon="@Icons.Material.Outlined.EditNote" IconColor="Color.Warning" />
+    <StatisticsCard Title="Published" Value="@PublishedCountText" Caption="Live editorial assets" BadgeText="Editorial CRUD enabled" Icon="@Icons.Material.Outlined.Article" IconColor="Color.Success" />
+</div>
+
+<MudPaper Class="surface-panel table-host section-spacer">
+    <MudDataGrid @ref="_dataGrid" T="BlogPostDto" ServerData="LoadPostsAsync" Dense="true" Hover="true" Filterable="true" FilterMode="DataGridFilterMode.ColumnFilterRow" SortMode="SortMode.Multiple" Elevation="0">
+        <ToolBarContent>
+            <div class="search-toolbar">
+                <MudText Typo="Typo.h6">Editorial queue</MudText>
+                <MudSpacer />
+                <MudTextField T="string" Value="@_searchText" ValueChanged="OnSearchChanged" Placeholder="Search posts" Variant="Variant.Outlined" Immediate="true" DebounceInterval="300" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" OnClick="OpenCreatePost">New post</MudButton>
+            </div>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="x => x.Title" Title="Title" />
+            <PropertyColumn Property="x => x.Category" Title="Category" />
+            <PropertyColumn Property="x => x.Status" Title="Status" />
+            <PropertyColumn Property="x => x.Author" Title="Author" />
+            <PropertyColumn Property="x => x.PublishedUtc" Title="Published">
+                <CellTemplate>
+                    @(context.Item.PublishedUtc?.ToLocalTime().ToString("MMM dd, yyyy") ?? "Not scheduled")
+                </CellTemplate>
+            </PropertyColumn>
+            <TemplateColumn Title="Actions" Sortable="false" Filterable="false">
+                <CellTemplate>
+                    <MudStack Row="true" Spacing="1">
+                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" OnClick="@(() => EditPost(context.Item))" />
+                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeletePostAsync(context.Item))" />
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="BlogPostDto" PageSizeOptions="@(new[] { 10, 20, 50 })" />
+        </PagerContent>
+    </MudDataGrid>
+</MudPaper>
+
+@code {
+    private MudDataGrid<BlogPostDto>? _dataGrid;
+    private string? _searchText;
+    private int _draftCount;
+    private int _publishedCount;
+    private string DraftCountText => _draftCount.ToString("N0");
+    private string PublishedCountText => _publishedCount.ToString("N0");
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshMetricsAsync();
+    }
+
+    private async Task<GridData<BlogPostDto>> LoadPostsAsync(GridState<BlogPostDto> state)
+    {
+        var result = await BlogPostsApiClient.GetBlogPostsAsync(new GridQueryRequest
+        {
+            Page = state.Page + 1,
+            PageSize = state.PageSize,
+            SearchTerm = _searchText,
+            Sorts = state.SortDefinitions.Select(sort => new SortDescriptor { Field = sort.SortBy, Descending = sort.Descending }).ToList()
+        });
+
+        _draftCount = result.Items.Count(post => post.Status is "Draft" or "In Review");
+        return new GridData<BlogPostDto> { Items = result.Items, TotalItems = result.TotalCount };
+    }
+
+    private async Task RefreshMetricsAsync()
+    {
+        var metrics = await BlogPostsApiClient.GetBlogPostsAsync(new GridQueryRequest { Page = 1, PageSize = 100 });
+        _draftCount = metrics.Items.Count(post => post.Status is "Draft" or "In Review");
+        _publishedCount = metrics.Items.Count(post => post.Status == "Published");
+    }
+
+    private Task OnSearchChanged(string value)
+    {
+        _searchText = value;
+        return ReloadAsync();
+    }
+
+    private Task ReloadAsync() => _dataGrid?.ReloadServerData() ?? Task.CompletedTask;
+
+    private void OpenCreatePost()
+    {
+        NavigationManager.NavigateTo("/blog/create");
+    }
+
+    private void EditPost(BlogPostDto post)
+    {
+        NavigationManager.NavigateTo($"/blog/{post.Id}/edit");
+    }
+
+    private async Task DeletePostAsync(BlogPostDto post)
+    {
+        await BlogPostsApiClient.DeleteBlogPostAsync(post.Id);
+        Snackbar.Add($"Deleted {post.Title}.", Severity.Warning);
+        await RefreshMetricsAsync();
+        await ReloadAsync();
+    }
+}

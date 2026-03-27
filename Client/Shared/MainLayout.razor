@@ -1,0 +1,90 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using MudBlazor
+@inherits LayoutComponentBase
+@implements IDisposable
+
+<MudThemeProvider Theme="_theme" IsDarkMode="false" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout Class="app-shell">
+    <MudAppBar Elevation="0" Dense="true">
+        <MudIconButton Icon="@Icons.Material.Outlined.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" />
+        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+            <div class="brand-chip">Admin Panel</div>
+            <MudText Typo="Typo.subtitle2">Clean UI</MudText>
+        </MudStack>
+        <MudSpacer />
+        <AuthorizeView>
+            <Authorized>
+                <MudChip T="string" Variant="Variant.Outlined" Color="Color.Primary" Icon="@Icons.Material.Outlined.VerifiedUser">
+                    @_displayName
+                </MudChip>
+            </Authorized>
+        </AuthorizeView>
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="0" Variant="DrawerVariant.Responsive" ClipMode="DrawerClipMode.Always" Breakpoint="Breakpoint.Md">
+        <NavMenu />
+    </MudDrawer>
+
+    <MudMainContent>
+        <div class="content-shell">
+            @Body
+        </div>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+    private string _displayName = "Admin";
+
+    [Inject]
+    private AppState AppState { get; set; } = default!;
+
+    private readonly MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#2563eb",
+            Secondary = "#0f172a",
+            Tertiary = "#38bdf8",
+            Info = "#0284c7",
+            Success = "#16a34a",
+            Warning = "#d97706",
+            Background = "#eef3fb",
+            Surface = "#ffffff",
+            AppbarBackground = "rgba(255,255,255,0.82)",
+            DrawerBackground = "rgba(250,252,255,0.94)",
+            TextPrimary = "#101828",
+            TextSecondary = "#5b6475"
+        },
+        LayoutProperties = new LayoutProperties
+        {
+            DefaultBorderRadius = "12px"
+        }
+    };
+
+    protected override void OnInitialized()
+    {
+        _displayName = AppState.DisplayName ?? _displayName;
+        AppState.OnChange += HandleAppStateChanged;
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= HandleAppStateChanged;
+    }
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private void HandleAppStateChanged()
+    {
+        _displayName = AppState.DisplayName ?? "Admin";
+        InvokeAsync(StateHasChanged);
+    }
+}

@@ -1,0 +1,84 @@
+@page "/"
+@attribute [Authorize]
+@inject IDashboardApiClient DashboardApiClient
+@inject IWidgetCatalogApiClient WidgetCatalogApiClient
+@inject NavigationManager NavigationManager
+
+<PageHeader Title="Dashboard" Subtitle="High-level commerce and publishing telemetry with clean, glanceable visuals.">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.DashboardCustomize" OnClick="OpenWidgetManager">
+            Manage widgets
+        </MudButton>
+    </Actions>
+</PageHeader>
+
+@if (_isLoading)
+{
+    <MudSkeleton Height="340px" Width="100%" Animation="Animation.Wave" />
+}
+else
+{
+    <div class="panel-grid metrics">
+        @foreach (var widget in _widgets)
+        {
+            <StatisticsWidget Title="@widget.Title" Value="@widget.Value" Subtitle="@widget.Subtitle" Trend="@widget.Trend" Icon="@widget.Icon" Color="@ParseColor(widget.Color)" />
+        }
+    </div>
+
+    <div class="panel-grid charts section-spacer">
+        <MudPaper Class="chart-card">
+            <MudText Typo="Typo.h6">Sales velocity</MudText>
+            <MudText Typo="Typo.body2" Class="metric-caption">Last six months of completed sales.</MudText>
+            <MudChart ChartType="ChartType.Bar" ChartSeries="@_salesSeries" XAxisLabels="@_overview.SalesLabels" Width="100%" Height="320px" />
+        </MudPaper>
+
+        <MudPaper Class="chart-card">
+            <MudText Typo="Typo.h6">Blog traffic</MudText>
+            <MudText Typo="Typo.body2" Class="metric-caption">Seven-day session volume across content surfaces.</MudText>
+            <MudChart ChartType="ChartType.Line" ChartSeries="@_blogSeries" XAxisLabels="@_overview.BlogTrafficLabels" Width="100%" Height="320px" />
+        </MudPaper>
+    </div>
+}
+
+@code {
+    private DashboardOverviewDto _overview = new();
+    private IReadOnlyList<DashboardWidgetDto> _widgets = [];
+    private bool _isLoading = true;
+    private List<ChartSeries> _salesSeries = [];
+    private List<ChartSeries> _blogSeries = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _overview = await DashboardApiClient.GetOverviewAsync();
+        _widgets = await WidgetCatalogApiClient.GetWidgetsAsync();
+        _salesSeries =
+        [
+            new ChartSeries
+            {
+                Name = "Revenue units",
+                Data = _overview.SalesValues
+            }
+        ];
+        _blogSeries =
+        [
+            new ChartSeries
+            {
+                Name = "Sessions",
+                Data = _overview.BlogTrafficValues
+            }
+        ];
+        _isLoading = false;
+    }
+
+    private void OpenWidgetManager()
+    {
+        NavigationManager.NavigateTo("/dashboard/widgets");
+    }
+
+    private static Color ParseColor(string color)
+    {
+        return Enum.TryParse<Color>(color, out var parsed)
+            ? parsed
+            : Color.Primary;
+    }
+}

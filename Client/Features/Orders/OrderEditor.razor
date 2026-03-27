@@ -1,0 +1,94 @@
+@page "/orders/create"
+@page "/orders/{Id:guid}/edit"
+@attribute [Authorize]
+@inject IOrdersApiClient OrdersApiClient
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageHeader Title="@PageTitle" Subtitle="Manage order records on a dedicated editor page." />
+
+<InlineEditorPanel Title="@PageTitle" Subtitle="Create or update order metadata and fulfillment state." EditContext="@_editContext" OnValidSubmit="SaveAsync" OnCancel="Cancel" SaveText="Save order" IsBusy="_isSaving">
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_model.Number" For="@(() => _model.Number)" Label="Order number" Variant="Variant.Outlined" Required="true" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_model.Customer" For="@(() => _model.Customer)" Label="Customer" Variant="Variant.Outlined" Required="true" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudNumericField T="decimal" @bind-Value="_model.Total" For="@(() => _model.Total)" Label="Total" Variant="Variant.Outlined" Min="0" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudSelect T="string" @bind-Value="_model.FulfillmentStatus" Label="Status" Variant="Variant.Outlined">
+                @foreach (var status in StatusOptions)
+                {
+                    <MudSelectItem Value="@status">@status</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+</InlineEditorPanel>
+
+@code {
+    [Parameter]
+    public Guid? Id { get; set; }
+
+    private readonly UpsertOrderRequest _model = new();
+    private EditContext _editContext = default!;
+    private bool _isSaving;
+    private string PageTitle => Id.HasValue ? "Edit Order" : "Create Order";
+    private static readonly string[] StatusOptions = ["Processing", "Packed", "Delivered", "Refund requested"];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _editContext = new EditContext(_model);
+        _model.FulfillmentStatus = StatusOptions[0];
+        _model.CreatedUtc = DateTime.UtcNow;
+        _model.Total = 1m;
+
+        if (!Id.HasValue)
+        {
+            return;
+        }
+
+        var order = await OrdersApiClient.GetOrderAsync(Id.Value);
+        if (order is null)
+        {
+            Snackbar.Add("Order not found.", Severity.Error);
+            NavigationManager.NavigateTo("/orders");
+            return;
+        }
+
+        _model.Id = order.Id;
+        _model.Number = order.Number;
+        _model.Customer = order.Customer;
+        _model.Total = order.Total;
+        _model.FulfillmentStatus = order.FulfillmentStatus;
+        _model.CreatedUtc = order.CreatedUtc;
+        _editContext = new EditContext(_model);
+    }
+
+    private async Task SaveAsync()
+    {
+        _isSaving = true;
+
+        if (Id.HasValue)
+        {
+            await OrdersApiClient.UpdateOrderAsync(Id.Value, _model);
+            Snackbar.Add("Order updated.", Severity.Success);
+        }
+        else
+        {
+            await OrdersApiClient.CreateOrderAsync(_model);
+            Snackbar.Add("Order created.", Severity.Success);
+        }
+
+        _isSaving = false;
+        NavigationManager.NavigateTo("/orders");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/orders");
+    }
+}

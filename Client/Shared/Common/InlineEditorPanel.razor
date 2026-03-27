@@ -1,0 +1,54 @@
+@using Microsoft.AspNetCore.Components.Forms
+
+<MudPaper Class="surface-panel section-spacer">
+    <EditForm EditContext="EditContext" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator />
+        <MudStack Spacing="2">
+            <div class="page-header-copy">
+                <MudText Typo="Typo.h5">@Title</MudText>
+                @if (!string.IsNullOrWhiteSpace(Subtitle))
+                {
+                    <MudText Typo="Typo.body2" Class="metric-caption">@Subtitle</MudText>
+                }
+            </div>
+
+            @ChildContent
+
+            <MudStack Row="true" Spacing="1" Justify="Justify.FlexEnd">
+                <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="OnCancel">Cancel</MudButton>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="IsBusy">
+                    @(IsBusy ? BusyText : SaveText)
+                </MudButton>
+            </MudStack>
+        </MudStack>
+    </EditForm>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? Subtitle { get; set; }
+
+    [Parameter, EditorRequired]
+    public EditContext EditContext { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public RenderFragment ChildContent { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public EventCallback OnValidSubmit { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public string SaveText { get; set; } = "Save";
+
+    [Parameter]
+    public string BusyText { get; set; } = "Saving...";
+
+    [Parameter]
+    public bool IsBusy { get; set; }
+}

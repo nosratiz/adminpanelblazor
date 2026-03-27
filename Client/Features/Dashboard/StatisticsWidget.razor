@@ -1,0 +1,31 @@
+<MudPaper Class="metric-card">
+    <MudStack Spacing="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            <MudText Typo="Typo.subtitle2">@Title</MudText>
+            <MudIcon Icon="@Icon" Color="@Color" />
+        </MudStack>
+        <div class="metric-value">@Value</div>
+        <MudText Typo="Typo.body2" Class="metric-caption">@Subtitle</MudText>
+        <div class="metric-badge">@Trend</div>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Value { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Subtitle { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Trend { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Icon { get; set; } = Icons.Material.Outlined.Insights;
+
+    [Parameter]
+    public Color Color { get; set; } = Color.Primary;
+}

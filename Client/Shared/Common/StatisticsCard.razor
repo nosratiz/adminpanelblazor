@@ -1,0 +1,34 @@
+<MudPaper Class="metric-card">
+    <MudStack Spacing="1">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.subtitle2">@Title</MudText>
+            <MudIcon Icon="@Icon" Color="@IconColor" />
+        </MudStack>
+        <div class="metric-value">@Value</div>
+        <div class="metric-caption">@Caption</div>
+        @if (!string.IsNullOrWhiteSpace(BadgeText))
+        {
+            <div class="metric-badge">@BadgeText</div>
+        }
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Value { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Caption { get; set; } = string.Empty;
+
+    [Parameter]
+    public string BadgeText { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Icon { get; set; } = Icons.Material.Outlined.AutoGraph;
+
+    [Parameter]
+    public Color IconColor { get; set; } = Color.Primary;
+}

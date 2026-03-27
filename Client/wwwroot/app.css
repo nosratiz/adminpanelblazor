@@ -1,0 +1,292 @@
+:root {
+    --shell-bg: radial-gradient(circle at top left, #ffffff 0%, #eef3fb 42%, #e6edf9 100%);
+    --surface-0: rgba(255, 255, 255, 0.78);
+    --surface-1: rgba(255, 255, 255, 0.92);
+    --surface-2: #f8fbff;
+    --line-soft: rgba(15, 23, 42, 0.08);
+    --line-strong: rgba(15, 23, 42, 0.14);
+    --text-strong: #101828;
+    --text-muted: #5b6475;
+    --accent: #2563eb;
+    --accent-soft: rgba(37, 99, 235, 0.12);
+    --success-soft: rgba(34, 197, 94, 0.12);
+    --warning-soft: rgba(245, 158, 11, 0.14);
+    --panel-shadow: 0 20px 60px rgba(15, 23, 42, 0.09);
+    --panel-radius: 12px;
+}
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+    font-family: "Manrope", sans-serif;
+    background: var(--shell-bg);
+    color: var(--text-strong);
+}
+
+body {
+    min-height: 100vh;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+#app {
+    min-height: 100vh;
+}
+
+.mud-main-content {
+    background: transparent;
+}
+
+.app-shell {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(148, 163, 184, 0.16), transparent 24%);
+}
+
+.content-shell {
+    padding: 1.5rem;
+}
+
+.surface-panel,
+.glass-panel,
+.empty-state,
+.auth-card,
+.metric-card,
+.chart-card {
+    backdrop-filter: blur(18px);
+    background: var(--surface-0);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--panel-radius);
+    box-shadow: var(--panel-shadow);
+}
+
+.surface-panel,
+.chart-card,
+.metric-card,
+.empty-state {
+    padding: 1.25rem;
+}
+
+.page-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.page-header-copy h1,
+.page-header-copy h2,
+.page-header-copy h3,
+.page-header-copy p {
+    margin: 0;
+}
+
+.page-header-copy p {
+    color: var(--text-muted);
+    margin-top: 0.35rem;
+}
+
+.panel-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.panel-grid.metrics {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.panel-grid.charts {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.metric-value {
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+.metric-caption {
+    color: var(--text-muted);
+}
+
+.metric-badge {
+    width: fit-content;
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.search-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.empty-state {
+    min-height: 260px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+}
+
+.auth-shell {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 1.5rem;
+}
+
+.auth-card {
+    width: min(100%, 480px);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-card::before {
+    content: "";
+    position: absolute;
+    inset: -20% auto auto -10%;
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.22), transparent 70%);
+    pointer-events: none;
+}
+
+.auth-title {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.auth-title p {
+    color: var(--text-muted);
+}
+
+.boot-shell {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: var(--shell-bg);
+}
+
+.boot-card {
+    position: relative;
+    padding: 2rem 2.5rem;
+    border-radius: 24px;
+    border: 1px solid var(--line-soft);
+    background: rgba(255, 255, 255, 0.86);
+    box-shadow: var(--panel-shadow);
+}
+
+.boot-orb {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #2563eb, #60a5fa);
+    box-shadow: 0 18px 40px rgba(37, 99, 235, 0.25);
+    animation: pulse 1.9s ease-in-out infinite;
+}
+
+.boot-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-strong);
+}
+
+.brand-chip {
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid var(--line-soft);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.mud-paper,
+.mud-card,
+.mud-popover,
+.mud-drawer,
+.mud-appbar {
+    border-radius: var(--panel-radius);
+}
+
+.mud-drawer {
+    border-right: 1px solid var(--line-soft);
+    background: rgba(250, 252, 255, 0.92) !important;
+    backdrop-filter: blur(18px);
+}
+
+.mud-appbar {
+    backdrop-filter: blur(18px);
+    background: rgba(255, 255, 255, 0.76) !important;
+    color: var(--text-strong) !important;
+    border-bottom: 1px solid var(--line-soft);
+}
+
+.mud-table-container,
+.mud-table-root,
+.mud-data-grid {
+    border-radius: var(--panel-radius);
+}
+
+.mud-input-control > .mud-input-control-input-container > .mud-input,
+.mud-input-slot,
+.mud-button-root,
+.mud-chip,
+.mud-select,
+.mud-picker {
+    border-radius: 12px !important;
+}
+
+.mud-data-grid {
+    background: transparent;
+}
+
+.table-host {
+    padding: 0.5rem;
+}
+
+.kpi-row {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.section-spacer {
+    margin-top: 1.5rem;
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.06);
+        opacity: 0.85;
+    }
+}
+
+@media (max-width: 768px) {
+    .content-shell {
+        padding: 1rem;
+    }
+
+    .auth-card {
+        padding: 1.5rem;
+    }
+}

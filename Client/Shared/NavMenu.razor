@@ -1,0 +1,32 @@
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+<MudStack Class="pa-4" Spacing="2">
+    <MudStack Spacing="0">
+        <MudText Typo="Typo.h6">Operations</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Commerce, content, and reporting</MudText>
+    </MudStack>
+
+    <MudNavMenu Rounded="true" Bordered="false">
+        <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.SpaceDashboard">Dashboard</MudNavLink>
+        <MudNavLink Href="/users" Icon="@Icons.Material.Outlined.People">Users</MudNavLink>
+        <MudNavLink Href="/products" Icon="@Icons.Material.Outlined.Inventory2">Products</MudNavLink>
+        <MudNavLink Href="/orders" Icon="@Icons.Material.Outlined.ReceiptLong">Orders</MudNavLink>
+        <MudNavLink Href="/blog" Icon="@Icons.Material.Outlined.Article">Blog</MudNavLink>
+        <MudNavLink Href="/reports" Icon="@Icons.Material.Outlined.Insights">Reports</MudNavLink>
+    </MudNavMenu>
+
+    <MudDivider />
+
+    <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Logout" OnClick="LogoutAsync">
+        Sign out
+    </MudButton>
+</MudStack>
+
+@code {
+    private async Task LogoutAsync()
+    {
+        await AuthService.LogoutAsync();
+        NavigationManager.NavigateTo("/login", true);
+    }
+}

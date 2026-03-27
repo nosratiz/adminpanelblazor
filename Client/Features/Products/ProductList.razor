@@ -1,0 +1,87 @@
+@page "/products"
+@attribute [Authorize]
+@inject IProductsApiClient ProductsApiClient
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<PageHeader Title="Products" Subtitle="Inventory health, pricing, and merchandising controls in one grid.">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.AddBox" OnClick="OpenCreateProduct">
+            Add product
+        </MudButton>
+    </Actions>
+</PageHeader>
+
+<MudPaper Class="surface-panel table-host">
+    <MudDataGrid @ref="_dataGrid" T="ProductDto" ServerData="LoadProductsAsync" Dense="true" Hover="true" Filterable="true" FilterMode="DataGridFilterMode.ColumnFilterRow" SortMode="SortMode.Multiple" Elevation="0">
+        <ToolBarContent>
+            <div class="search-toolbar">
+                <MudText Typo="Typo.h6">Catalog</MudText>
+                <MudSpacer />
+                <MudTextField T="string" Value="@_searchText" ValueChanged="OnSearchChanged" Placeholder="Search products" Variant="Variant.Outlined" Immediate="true" DebounceInterval="300" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" />
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Refresh" OnClick="ReloadAsync">Refresh</MudButton>
+            </div>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="x => x.Sku" Title="SKU" />
+            <PropertyColumn Property="x => x.Name" Title="Product" />
+            <PropertyColumn Property="x => x.Price" Title="Price" Format="C" />
+            <PropertyColumn Property="x => x.Stock" Title="Stock" />
+            <PropertyColumn Property="x => x.Status" Title="Status" />
+            <TemplateColumn Title="Actions" Sortable="false" Filterable="false">
+                <CellTemplate>
+                    <MudStack Row="true" Spacing="1">
+                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" OnClick="@(() => EditProduct(context.Item))" />
+                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteProductAsync(context.Item))" />
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="ProductDto" PageSizeOptions="@(new[] { 10, 20, 50 })" />
+        </PagerContent>
+    </MudDataGrid>
+</MudPaper>
+
+@code {
+    private MudDataGrid<ProductDto>? _dataGrid;
+    private string? _searchText;
+
+    private async Task<GridData<ProductDto>> LoadProductsAsync(GridState<ProductDto> state)
+    {
+        var result = await ProductsApiClient.GetProductsAsync(new GridQueryRequest
+        {
+            Page = state.Page + 1,
+            PageSize = state.PageSize,
+            SearchTerm = _searchText,
+            Sorts = state.SortDefinitions.Select(sort => new SortDescriptor { Field = sort.SortBy, Descending = sort.Descending }).ToList()
+        });
+
+        return new GridData<ProductDto> { Items = result.Items, TotalItems = result.TotalCount };
+    }
+
+    private Task OnSearchChanged(string value)
+    {
+        _searchText = value;
+        return ReloadAsync();
+    }
+
+    private Task ReloadAsync() => _dataGrid?.ReloadServerData() ?? Task.CompletedTask;
+
+    private void OpenCreateProduct()
+    {
+        NavigationManager.NavigateTo("/products/create");
+    }
+
+    private void EditProduct(ProductDto product)
+    {
+        NavigationManager.NavigateTo($"/products/{product.Id}/edit");
+    }
+
+    private async Task DeleteProductAsync(ProductDto product)
+    {
+        await ProductsApiClient.DeleteProductAsync(product.Id);
+        Snackbar.Add($"Deleted {product.Name}.", Severity.Warning);
+        await ReloadAsync();
+    }
+}

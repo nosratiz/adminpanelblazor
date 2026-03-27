@@ -1,0 +1,100 @@
+@page "/dashboard/widgets/create"
+@page "/dashboard/widgets/{Id:guid}/edit"
+@attribute [Authorize]
+@inject IWidgetCatalogApiClient WidgetCatalogApiClient
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageHeader Title="@PageTitle" Subtitle="Manage dashboard widgets on a dedicated editor page." />
+
+<InlineEditorPanel Title="@PageTitle" Subtitle="Create or update metric widgets used on the dashboard home page." EditContext="@_editContext" OnValidSubmit="SaveAsync" OnCancel="Cancel" SaveText="Save widget" IsBusy="_isSaving">
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_model.Title" For="@(() => _model.Title)" Label="Title" Variant="Variant.Outlined" Required="true" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_model.Value" For="@(() => _model.Value)" Label="Value" Variant="Variant.Outlined" Required="true" />
+        </MudItem>
+        <MudItem xs="12">
+            <MudTextField @bind-Value="_model.Subtitle" For="@(() => _model.Subtitle)" Label="Subtitle" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_model.Trend" For="@(() => _model.Trend)" Label="Trend" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudTextField @bind-Value="_model.Icon" For="@(() => _model.Icon)" Label="Icon" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" @bind-Value="_model.Color" Label="Color" Variant="Variant.Outlined">
+                @foreach (var color in ColorOptions)
+                {
+                    <MudSelectItem Value="@color">@color</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+</InlineEditorPanel>
+
+@code {
+    [Parameter]
+    public Guid? Id { get; set; }
+
+    private readonly UpsertDashboardWidgetRequest _model = new();
+    private EditContext _editContext = default!;
+    private bool _isSaving;
+    private string PageTitle => Id.HasValue ? "Edit Widget" : "Create Widget";
+    private static readonly string[] ColorOptions = [nameof(Color.Primary), nameof(Color.Success), nameof(Color.Warning), nameof(Color.Info), nameof(Color.Error)];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _editContext = new EditContext(_model);
+        _model.Icon = Icons.Material.Outlined.Insights;
+        _model.Color = ColorOptions[0];
+
+        if (!Id.HasValue)
+        {
+            return;
+        }
+
+        var widget = await WidgetCatalogApiClient.GetWidgetAsync(Id.Value);
+        if (widget is null)
+        {
+            Snackbar.Add("Widget not found.", Severity.Error);
+            NavigationManager.NavigateTo("/dashboard/widgets");
+            return;
+        }
+
+        _model.Id = widget.Id;
+        _model.Title = widget.Title;
+        _model.Value = widget.Value;
+        _model.Subtitle = widget.Subtitle;
+        _model.Trend = widget.Trend;
+        _model.Icon = widget.Icon;
+        _model.Color = widget.Color;
+        _editContext = new EditContext(_model);
+    }
+
+    private async Task SaveAsync()
+    {
+        _isSaving = true;
+
+        if (Id.HasValue)
+        {
+            await WidgetCatalogApiClient.UpdateWidgetAsync(Id.Value, _model);
+            Snackbar.Add("Widget updated.", Severity.Success);
+        }
+        else
+        {
+            await WidgetCatalogApiClient.CreateWidgetAsync(_model);
+            Snackbar.Add("Widget created.", Severity.Success);
+        }
+
+        _isSaving = false;
+        NavigationManager.NavigateTo("/dashboard/widgets");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/dashboard/widgets");
+    }
+}

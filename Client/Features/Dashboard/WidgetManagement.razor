@@ -1,0 +1,68 @@
+@page "/dashboard/widgets"
+@attribute [Authorize]
+@inject IWidgetCatalogApiClient WidgetCatalogApiClient
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageHeader Title="Dashboard Widgets" Subtitle="Manage hero metric widgets from a dedicated CRUD page.">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.AddChart" OnClick="OpenCreateWidget">
+            Add widget
+        </MudButton>
+    </Actions>
+</PageHeader>
+
+<MudPaper Class="surface-panel table-host">
+    <MudTable T="DashboardWidgetDto" Items="@_widgets" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Title</MudTh>
+            <MudTh>Value</MudTh>
+            <MudTh>Subtitle</MudTh>
+            <MudTh>Color</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Title">@context.Title</MudTd>
+            <MudTd DataLabel="Value">@context.Value</MudTd>
+            <MudTd DataLabel="Subtitle">@context.Subtitle</MudTd>
+            <MudTd DataLabel="Color">@context.Color</MudTd>
+            <MudTd DataLabel="Actions">
+                <MudStack Row="true" Spacing="1">
+                    <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" OnClick="@(() => EditWidget(context))" />
+                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteWidgetAsync(context))" />
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private IReadOnlyList<DashboardWidgetDto> _widgets = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _widgets = await WidgetCatalogApiClient.GetWidgetsAsync();
+    }
+
+    private void OpenCreateWidget()
+    {
+        NavigationManager.NavigateTo("/dashboard/widgets/create");
+    }
+
+    private void EditWidget(DashboardWidgetDto widget)
+    {
+        NavigationManager.NavigateTo($"/dashboard/widgets/{widget.Id}/edit");
+    }
+
+    private async Task DeleteWidgetAsync(DashboardWidgetDto widget)
+    {
+        await WidgetCatalogApiClient.DeleteWidgetAsync(widget.Id);
+        Snackbar.Add($"Deleted {widget.Title}.", Severity.Warning);
+        await LoadAsync();
+    }
+}

@@ -1,0 +1,106 @@
+@page "/login"
+@layout BlankLayout
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using MudBlazor
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<div class="auth-shell">
+    <MudPaper Class="auth-card">
+        <div class="auth-title">
+            <MudText Typo="Typo.h4">Welcome back</MudText>
+            <MudText Typo="Typo.body1">Sign in to manage commerce, content, and reporting from one workspace.</MudText>
+        </div>
+
+        <EditForm EditContext="_editContext" OnValidSubmit="SubmitAsync">
+            <DataAnnotationsValidator />
+
+            <MudStack Spacing="2">
+                <MudTextField @bind-Value="_model.Email"
+                              Label="Email"
+                              Variant="Variant.Outlined"
+                              For="@(() => _model.Email)"
+                              Immediate="true"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Outlined.AlternateEmail" />
+
+                <MudTextField @bind-Value="_model.Password"
+                              Label="Password"
+                              Variant="Variant.Outlined"
+                              For="@(() => _model.Password)"
+                              Immediate="true"
+                              InputType="@(_showPassword ? InputType.Text : InputType.Password)"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@(_showPassword ? Icons.Material.Outlined.VisibilityOff : Icons.Material.Outlined.Visibility)"
+                              OnAdornmentClick="TogglePassword" />
+
+                @if (!string.IsNullOrWhiteSpace(_errorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">@_errorMessage</MudAlert>
+                }
+
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Size="Size.Large"
+                           Disabled="_isSubmitting">
+                    @(_isSubmitting ? "Signing in..." : "Sign in")
+                </MudButton>
+
+                <MudAlert Severity="Severity.Info" Variant="Variant.Text">
+                    Demo credentials: admin@sampleblazor.dev / Admin123!
+                </MudAlert>
+            </MudStack>
+        </EditForm>
+    </MudPaper>
+</div>
+
+@code {
+    private readonly LoginRequest _model = new();
+    private EditContext _editContext = default!;
+    private bool _isSubmitting;
+    private bool _showPassword;
+    private string? _errorMessage;
+
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _editContext = new EditContext(_model);
+        _model.Email = "admin@sampleblazor.dev";
+        _model.Password = "Admin123!";
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (_isSubmitting)
+        {
+            return;
+        }
+
+        _isSubmitting = true;
+        _errorMessage = null;
+
+        var result = await AuthService.LoginAsync(_model);
+        _isSubmitting = false;
+
+        if (!result.Succeeded)
+        {
+            _errorMessage = result.ErrorMessage;
+            Snackbar.Add(result.ErrorMessage!, Severity.Error);
+            return;
+        }
+
+        Snackbar.Add("Signed in successfully.", Severity.Success);
+        NavigationManager.NavigateTo(string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : $"/{ReturnUrl.TrimStart('/')}", true);
+    }
+
+    private void TogglePassword()
+    {
+        _showPassword = !_showPassword;
+    }
+}

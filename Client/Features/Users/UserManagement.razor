@@ -1,0 +1,156 @@
+@page "/users"
+@attribute [Authorize]
+@inject IUsersApiClient UsersApiClient
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<PageHeader Title="User management" Subtitle="Server-driven paging, filtering, and sorting built on MudDataGrid.">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.PersonAdd" OnClick="OpenCreateUser">
+            Invite user
+        </MudButton>
+    </Actions>
+</PageHeader>
+
+<MudPaper Class="surface-panel table-host">
+    <MudDataGrid @ref="_dataGrid"
+                 T="UserDto"
+                 ServerData="LoadUsersAsync"
+                 Dense="true"
+                 Hover="true"
+                 SortMode="SortMode.Multiple"
+                 Filterable="true"
+                 FilterMode="DataGridFilterMode.ColumnFilterRow"
+                 Elevation="0">
+        <ToolBarContent>
+            <div class="search-toolbar">
+                <MudText Typo="Typo.h6">Team directory</MudText>
+                <MudSpacer />
+                <MudTextField T="string"
+                              Value="@_searchText"
+                              ValueChanged="OnSearchChanged"
+                              Placeholder="Search users"
+                              Variant="Variant.Outlined"
+                              Immediate="true"
+                              DebounceInterval="300"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Outlined.Search" />
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Refresh" OnClick="ReloadAsync">Refresh</MudButton>
+            </div>
+        </ToolBarContent>
+
+        <Columns>
+            <PropertyColumn Property="x => x.FullName" Title="Name" />
+            <PropertyColumn Property="x => x.Email" Title="Email" />
+            <PropertyColumn Property="x => x.Role" Title="Role" />
+            <PropertyColumn Property="x => x.Status" Title="Status">
+                <CellTemplate>
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@GetStatusColor(context.Item.Status)">
+                        @context.Item.Status
+                    </MudChip>
+                </CellTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="x => x.LastActiveUtc" Title="Last active">
+                <CellTemplate>
+                    @context.Item.LastActiveUtc.ToLocalTime().ToString("MMM dd, HH:mm")
+                </CellTemplate>
+            </PropertyColumn>
+            <TemplateColumn Title="Actions" Sortable="false" Filterable="false">
+                <CellTemplate>
+                    <MudStack Row="true" Spacing="1">
+                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" OnClick="@(() => EditUser(context.Item))" />
+                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteUserAsync(context.Item))" />
+                        <MudIconButton Icon="@Icons.Material.Outlined.MailOutline" Size="Size.Small" OnClick="@(() => SendResetAsync(context.Item))" />
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+
+        <PagerContent>
+            <MudDataGridPager T="UserDto" PageSizeOptions="@(new[] { 10, 20, 50 })" />
+        </PagerContent>
+    </MudDataGrid>
+</MudPaper>
+
+@code {
+    private MudDataGrid<UserDto>? _dataGrid;
+    private string? _searchText;
+
+    private async Task<GridData<UserDto>> LoadUsersAsync(GridState<UserDto> state)
+    {
+        var request = new GridQueryRequest
+        {
+            Page = state.Page + 1,
+            PageSize = state.PageSize,
+            SearchTerm = _searchText,
+            Sorts = state.SortDefinitions
+                .Select(sort => new SortDescriptor
+                {
+                    Field = sort.SortBy,
+                    Descending = sort.Descending
+                })
+                .ToList(),
+            Filters = state.FilterDefinitions
+                .Where(filter => filter.Value is not null)
+                .Select(filter => new FilterDescriptor
+                {
+                    Field = filter.Column?.PropertyName ?? string.Empty,
+                    Operator = filter.Operator ?? string.Empty,
+                    Value = filter.Value?.ToString()
+                })
+                .ToList()
+        };
+
+        var result = await UsersApiClient.GetUsersAsync(request);
+        return new GridData<UserDto>
+        {
+            Items = result.Items,
+            TotalItems = result.TotalCount
+        };
+    }
+
+    private Task OnSearchChanged(string value)
+    {
+        _searchText = value;
+        return _dataGrid?.ReloadServerData() ?? Task.CompletedTask;
+    }
+
+    private Task ReloadAsync()
+    {
+        return _dataGrid?.ReloadServerData() ?? Task.CompletedTask;
+    }
+
+    private void OpenCreateUser()
+    {
+        NavigationManager.NavigateTo("/users/create");
+    }
+
+    private void EditUser(UserDto user)
+    {
+        NavigationManager.NavigateTo($"/users/{user.Id}/edit");
+    }
+
+    private async Task DeleteUserAsync(UserDto user)
+    {
+        await UsersApiClient.DeleteUserAsync(user.Id);
+        Snackbar.Add($"Deleted {user.FullName}.", Severity.Warning);
+        await ReloadAsync();
+    }
+
+    private async Task SendResetAsync(UserDto user)
+    {
+        await UsersApiClient.ResetPasswordAsync(user.Id);
+        Snackbar.Add($"Password reset queued for {user.Email}.", Severity.Success);
+    }
+
+    private static Color GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "Active" => Color.Success,
+            "Pending" => Color.Warning,
+            "Suspended" => Color.Error,
+            _ => Color.Default
+        };
+    }
+}

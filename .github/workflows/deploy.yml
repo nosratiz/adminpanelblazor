@@ -1,0 +1,48 @@
+name: Deploy Blazor WASM to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish Blazor WebAssembly app
+        run: dotnet publish Client/Client.csproj -c Release
+
+      - name: Prepare GitHub Pages artifacts
+        env:
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
+        run: |
+          PUBLISH_DIR=$(find Client/bin/Release -type d -path '*/publish/wwwroot' | head -n 1)
+
+          if [ -z "$PUBLISH_DIR" ]; then
+            echo "Publish output folder not found."
+            exit 1
+          fi
+
+          echo "PUBLISH_DIR=$PUBLISH_DIR" >> "$GITHUB_ENV"
+          touch "$PUBLISH_DIR/.nojekyll"
+          sed -i "s#<base href=\"/\" />#<base href=\"/${REPOSITORY_NAME}/\" />#" "$PUBLISH_DIR/index.html"
+          sed -i "s#<base href=\"/\" />#<base href=\"/${REPOSITORY_NAME}/\" />#" "$PUBLISH_DIR/404.html"
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ${{ env.PUBLISH_DIR }}

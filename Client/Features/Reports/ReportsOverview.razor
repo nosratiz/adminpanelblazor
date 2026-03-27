@@ -1,0 +1,107 @@
+@page "/reports"
+@attribute [Authorize]
+@inject IReportsApiClient ReportsApiClient
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<PageHeader Title="Reports" Subtitle="Snapshot reporting surfaces for leadership and operations reviews." />
+
+<div class="kpi-row">
+    <StatisticsCard Title="Healthy reports" Value="@HealthyReportsText" Caption="Definitions with clean last-run state" BadgeText="Operational" Icon="@Icons.Material.Outlined.PieChart" IconColor="Color.Primary" />
+    <StatisticsCard Title="Needs review" Value="@NeedsReviewText" Caption="Reports flagged for follow-up" BadgeText="Action list" Icon="@Icons.Material.Outlined.AssignmentReturn" IconColor="Color.Success" />
+    <StatisticsCard Title="Paused" Value="@PausedReportsText" Caption="Disabled schedules or manual flows" BadgeText="Lifecycle tracked" Icon="@Icons.Material.Outlined.AdsClick" IconColor="Color.Info" />
+</div>
+
+<MudPaper Class="surface-panel table-host section-spacer">
+    <MudDataGrid @ref="_dataGrid" T="ReportDefinitionDto" ServerData="LoadReportsAsync" Dense="true" Hover="true" Filterable="true" FilterMode="DataGridFilterMode.ColumnFilterRow" SortMode="SortMode.Multiple" Elevation="0">
+        <ToolBarContent>
+            <div class="search-toolbar">
+                <MudText Typo="Typo.h6">Report catalog</MudText>
+                <MudSpacer />
+                <MudTextField T="string" Value="@_searchText" ValueChanged="OnSearchChanged" Placeholder="Search reports" Variant="Variant.Outlined" Immediate="true" DebounceInterval="300" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.NoteAdd" OnClick="OpenCreateReport">New report</MudButton>
+            </div>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="x => x.Name" Title="Name" />
+            <PropertyColumn Property="x => x.Owner" Title="Owner" />
+            <PropertyColumn Property="x => x.Frequency" Title="Frequency" />
+            <PropertyColumn Property="x => x.Status" Title="Status" />
+            <PropertyColumn Property="x => x.LastRunUtc" Title="Last run" Format="g" />
+            <TemplateColumn Title="Actions" Sortable="false" Filterable="false">
+                <CellTemplate>
+                    <MudStack Row="true" Spacing="1">
+                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" OnClick="@(() => EditReport(context.Item))" />
+                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteReportAsync(context.Item))" />
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="ReportDefinitionDto" PageSizeOptions="@(new[] { 10, 20, 50 })" />
+        </PagerContent>
+    </MudDataGrid>
+</MudPaper>
+
+@code {
+    private MudDataGrid<ReportDefinitionDto>? _dataGrid;
+    private string? _searchText;
+    private int _healthyReports;
+    private int _needsReview;
+    private int _pausedReports;
+    private string HealthyReportsText => _healthyReports.ToString("N0");
+    private string NeedsReviewText => _needsReview.ToString("N0");
+    private string PausedReportsText => _pausedReports.ToString("N0");
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshMetricsAsync();
+    }
+
+    private async Task<GridData<ReportDefinitionDto>> LoadReportsAsync(GridState<ReportDefinitionDto> state)
+    {
+        var result = await ReportsApiClient.GetReportsAsync(new GridQueryRequest
+        {
+            Page = state.Page + 1,
+            PageSize = state.PageSize,
+            SearchTerm = _searchText,
+            Sorts = state.SortDefinitions.Select(sort => new SortDescriptor { Field = sort.SortBy, Descending = sort.Descending }).ToList()
+        });
+
+        return new GridData<ReportDefinitionDto> { Items = result.Items, TotalItems = result.TotalCount };
+    }
+
+    private async Task RefreshMetricsAsync()
+    {
+        var metrics = await ReportsApiClient.GetReportsAsync(new GridQueryRequest { Page = 1, PageSize = 100 });
+        _healthyReports = metrics.Items.Count(report => report.Status == "Healthy");
+        _needsReview = metrics.Items.Count(report => report.Status == "Needs review");
+        _pausedReports = metrics.Items.Count(report => report.Status == "Paused");
+    }
+
+    private Task OnSearchChanged(string value)
+    {
+        _searchText = value;
+        return ReloadAsync();
+    }
+
+    private Task ReloadAsync() => _dataGrid?.ReloadServerData() ?? Task.CompletedTask;
+
+    private void OpenCreateReport()
+    {
+        NavigationManager.NavigateTo("/reports/create");
+    }
+
+    private void EditReport(ReportDefinitionDto report)
+    {
+        NavigationManager.NavigateTo($"/reports/{report.Id}/edit");
+    }
+
+    private async Task DeleteReportAsync(ReportDefinitionDto report)
+    {
+        await ReportsApiClient.DeleteReportAsync(report.Id);
+        Snackbar.Add($"Deleted {report.Name}.", Severity.Warning);
+        await RefreshMetricsAsync();
+        await ReloadAsync();
+    }
+}

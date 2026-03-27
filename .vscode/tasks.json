@@ -1,0 +1,158 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "build-client",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"Client/Client.csproj"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-client",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"Client/Client.csproj"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-client",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"Client/Client.csproj"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "list-dotnet-sdks",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"--list-sdks"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "build-client-net10-override",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"Client/Client.csproj",
+				"-p:TargetFramework=net10.0"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "restore-client-net10-override",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"restore",
+				"Client/Client.csproj",
+				"-p:TargetFramework=net10.0"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-client-net10-override",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"Client/Client.csproj",
+				"-p:TargetFramework=net10.0"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "restore-client-net10",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"restore",
+				"Client/Client.csproj"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-client-net10",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"Client/Client.csproj"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-client-crud",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"Client/Client.csproj"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-client-route-crud",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"Client/Client.csproj"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		}
+	]
+}

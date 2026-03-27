@@ -1,0 +1,98 @@
+@page "/users/create"
+@page "/users/{Id:guid}/edit"
+@attribute [Authorize]
+@inject IUsersApiClient UsersApiClient
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageHeader Title="@PageTitle" Subtitle="Manage admin user records on a dedicated editor page." />
+
+<InlineEditorPanel Title="@PageTitle" Subtitle="Create or update authenticated admin users." EditContext="@_editContext" OnValidSubmit="SaveAsync" OnCancel="Cancel" SaveText="Save user" IsBusy="_isSaving">
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_model.FullName" For="@(() => _model.FullName)" Label="Full name" Variant="Variant.Outlined" Required="true" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_model.Email" For="@(() => _model.Email)" Label="Email" Variant="Variant.Outlined" Required="true" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudSelect T="string" @bind-Value="_model.Role" Label="Role" Variant="Variant.Outlined">
+                @foreach (var role in RoleOptions)
+                {
+                    <MudSelectItem Value="@role">@role</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudSelect T="string" @bind-Value="_model.Status" Label="Status" Variant="Variant.Outlined">
+                @foreach (var status in StatusOptions)
+                {
+                    <MudSelectItem Value="@status">@status</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+</InlineEditorPanel>
+
+@code {
+    [Parameter]
+    public Guid? Id { get; set; }
+
+    private readonly UpsertUserRequest _model = new();
+    private EditContext _editContext = default!;
+    private bool _isSaving;
+    private string PageTitle => Id.HasValue ? "Edit User" : "Create User";
+    private static readonly string[] RoleOptions = ["Administrator", "Manager", "Editor", "Analyst", "Support"];
+    private static readonly string[] StatusOptions = ["Active", "Pending", "Suspended"];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _editContext = new EditContext(_model);
+        _model.Role = RoleOptions[0];
+        _model.Status = StatusOptions[0];
+
+        if (!Id.HasValue)
+        {
+            return;
+        }
+
+        var user = await UsersApiClient.GetUserAsync(Id.Value);
+        if (user is null)
+        {
+            Snackbar.Add("User not found.", Severity.Error);
+            NavigationManager.NavigateTo("/users");
+            return;
+        }
+
+        _model.Id = user.Id;
+        _model.FullName = user.FullName;
+        _model.Email = user.Email;
+        _model.Role = user.Role;
+        _model.Status = user.Status;
+        _editContext = new EditContext(_model);
+    }
+
+    private async Task SaveAsync()
+    {
+        _isSaving = true;
+
+        if (Id.HasValue)
+        {
+            await UsersApiClient.UpdateUserAsync(Id.Value, _model);
+            Snackbar.Add("User updated.", Severity.Success);
+        }
+        else
+        {
+            await UsersApiClient.CreateUserAsync(_model);
+            Snackbar.Add("User created.", Severity.Success);
+        }
+
+        _isSaving = false;
+        NavigationManager.NavigateTo("/users");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/users");
+    }
+}
