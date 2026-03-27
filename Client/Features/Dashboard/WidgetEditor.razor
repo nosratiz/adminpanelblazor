@@ -60,7 +60,7 @@
         if (widget is null)
         {
             Snackbar.Add("Widget not found.", Severity.Error);
-            NavigationManager.NavigateTo("/dashboard/widgets");
+            NavigationManager.NavigateTo("dashboard/widgets");
             return;
         }
 
@@ -90,11 +90,11 @@
         }
 
         _isSaving = false;
-        NavigationManager.NavigateTo("/dashboard/widgets");
+        NavigationManager.NavigateTo("dashboard/widgets");
     }
 
     private void Cancel()
     {
-        NavigationManager.NavigateTo("/dashboard/widgets");
+        NavigationManager.NavigateTo("dashboard/widgets");
     }
 }

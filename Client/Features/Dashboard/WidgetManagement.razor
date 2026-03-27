@@ -51,12 +51,12 @@
 
     private void OpenCreateWidget()
     {
-        NavigationManager.NavigateTo("/dashboard/widgets/create");
+        NavigationManager.NavigateTo("dashboard/widgets/create");
     }
 
     private void EditWidget(DashboardWidgetDto widget)
     {
-        NavigationManager.NavigateTo($"/dashboard/widgets/{widget.Id}/edit");
+        NavigationManager.NavigateTo($"dashboard/widgets/{widget.Id}/edit");
     }
 
     private async Task DeleteWidgetAsync(DashboardWidgetDto widget)

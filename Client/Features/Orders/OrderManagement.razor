@@ -70,12 +70,12 @@
 
     private void OpenCreateOrder()
     {
-        NavigationManager.NavigateTo("/orders/create");
+        NavigationManager.NavigateTo("orders/create");
     }
 
     private void EditOrder(OrderDto order)
     {
-        NavigationManager.NavigateTo($"/orders/{order.Id}/edit");
+        NavigationManager.NavigateTo($"orders/{order.Id}/edit");
     }
 
     private async Task DeleteOrderAsync(OrderDto order)

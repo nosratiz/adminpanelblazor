@@ -60,7 +60,7 @@
         if (user is null)
         {
             Snackbar.Add("User not found.", Severity.Error);
-            NavigationManager.NavigateTo("/users");
+            NavigationManager.NavigateTo("users");
             return;
         }
 
@@ -88,11 +88,11 @@
         }
 
         _isSaving = false;
-        NavigationManager.NavigateTo("/users");
+        NavigationManager.NavigateTo("users");
     }
 
     private void Cancel()
     {
-        NavigationManager.NavigateTo("/users");
+        NavigationManager.NavigateTo("users");
     }
 }

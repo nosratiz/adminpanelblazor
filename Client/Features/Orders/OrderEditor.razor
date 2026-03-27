@@ -55,7 +55,7 @@
         if (order is null)
         {
             Snackbar.Add("Order not found.", Severity.Error);
-            NavigationManager.NavigateTo("/orders");
+            NavigationManager.NavigateTo("orders");
             return;
         }
 
@@ -84,11 +84,11 @@
         }
 
         _isSaving = false;
-        NavigationManager.NavigateTo("/orders");
+        NavigationManager.NavigateTo("orders");
     }
 
     private void Cancel()
     {
-        NavigationManager.NavigateTo("/orders");
+        NavigationManager.NavigateTo("orders");
     }
 }

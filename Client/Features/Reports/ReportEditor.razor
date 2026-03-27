@@ -60,7 +60,7 @@
         if (report is null)
         {
             Snackbar.Add("Report not found.", Severity.Error);
-            NavigationManager.NavigateTo("/reports");
+            NavigationManager.NavigateTo("reports");
             return;
         }
 
@@ -90,11 +90,11 @@
         }
 
         _isSaving = false;
-        NavigationManager.NavigateTo("/reports");
+        NavigationManager.NavigateTo("reports");
     }
 
     private void Cancel()
     {
-        NavigationManager.NavigateTo("/reports");
+        NavigationManager.NavigateTo("reports");
     }
 }

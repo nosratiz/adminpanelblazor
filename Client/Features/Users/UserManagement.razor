@@ -122,12 +122,12 @@
 
     private void OpenCreateUser()
     {
-        NavigationManager.NavigateTo("/users/create");
+        NavigationManager.NavigateTo("users/create");
     }
 
     private void EditUser(UserDto user)
     {
-        NavigationManager.NavigateTo($"/users/{user.Id}/edit");
+        NavigationManager.NavigateTo($"users/{user.Id}/edit");
     }
 
     private async Task DeleteUserAsync(UserDto user)

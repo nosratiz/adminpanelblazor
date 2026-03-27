@@ -89,12 +89,12 @@
 
     private void OpenCreateReport()
     {
-        NavigationManager.NavigateTo("/reports/create");
+        NavigationManager.NavigateTo("reports/create");
     }
 
     private void EditReport(ReportDefinitionDto report)
     {
-        NavigationManager.NavigateTo($"/reports/{report.Id}/edit");
+        NavigationManager.NavigateTo($"reports/{report.Id}/edit");
     }
 
     private async Task DeleteReportAsync(ReportDefinitionDto report)

@@ -91,12 +91,12 @@
 
     private void OpenCreatePost()
     {
-        NavigationManager.NavigateTo("/blog/create");
+        NavigationManager.NavigateTo("blog/create");
     }
 
     private void EditPost(BlogPostDto post)
     {
-        NavigationManager.NavigateTo($"/blog/{post.Id}/edit");
+        NavigationManager.NavigateTo($"blog/{post.Id}/edit");
     }
 
     private async Task DeletePostAsync(BlogPostDto post)

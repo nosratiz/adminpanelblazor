@@ -80,7 +80,7 @@
         var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         if (authenticationState.User.Identity?.IsAuthenticated == true)
         {
-            NavigationManager.NavigateTo("/dashboard", true);
+            NavigationManager.NavigateTo("dashboard", true);
         }
     }
 
@@ -105,7 +105,7 @@
         }
 
         Snackbar.Add("Signed in successfully.", Severity.Success);
-        NavigationManager.NavigateTo(string.IsNullOrWhiteSpace(ReturnUrl) ? "/dashboard" : $"/{ReturnUrl.TrimStart('/')}", true);
+        NavigationManager.NavigateTo(string.IsNullOrWhiteSpace(ReturnUrl) ? "dashboard" : ReturnUrl.TrimStart('/'), true);
     }
 
     private void TogglePassword()

@@ -56,7 +56,7 @@
         if (post is null)
         {
             Snackbar.Add("Post not found.", Severity.Error);
-            NavigationManager.NavigateTo("/blog");
+            NavigationManager.NavigateTo("blog");
             return;
         }
 
@@ -87,11 +87,11 @@
         }
 
         _isSaving = false;
-        NavigationManager.NavigateTo("/blog");
+        NavigationManager.NavigateTo("blog");
     }
 
     private void Cancel()
     {
-        NavigationManager.NavigateTo("/blog");
+        NavigationManager.NavigateTo("blog");
     }
 }

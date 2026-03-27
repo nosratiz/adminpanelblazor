@@ -70,12 +70,12 @@
 
     private void OpenCreateProduct()
     {
-        NavigationManager.NavigateTo("/products/create");
+        NavigationManager.NavigateTo("products/create");
     }
 
     private void EditProduct(ProductDto product)
     {
-        NavigationManager.NavigateTo($"/products/{product.Id}/edit");
+        NavigationManager.NavigateTo($"products/{product.Id}/edit");
     }
 
     private async Task DeleteProductAsync(ProductDto product)

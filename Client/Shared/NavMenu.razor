@@ -8,12 +8,12 @@
     </MudStack>
 
     <MudNavMenu Rounded="true" Bordered="false">
-        <MudNavLink Href="/dashboard" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.SpaceDashboard">Dashboard</MudNavLink>
-        <MudNavLink Href="/users" Icon="@Icons.Material.Outlined.People">Users</MudNavLink>
-        <MudNavLink Href="/products" Icon="@Icons.Material.Outlined.Inventory2">Products</MudNavLink>
-        <MudNavLink Href="/orders" Icon="@Icons.Material.Outlined.ReceiptLong">Orders</MudNavLink>
-        <MudNavLink Href="/blog" Icon="@Icons.Material.Outlined.Article">Blog</MudNavLink>
-        <MudNavLink Href="/reports" Icon="@Icons.Material.Outlined.Insights">Reports</MudNavLink>
+        <MudNavLink Href="dashboard" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.SpaceDashboard">Dashboard</MudNavLink>
+        <MudNavLink Href="users" Icon="@Icons.Material.Outlined.People">Users</MudNavLink>
+        <MudNavLink Href="products" Icon="@Icons.Material.Outlined.Inventory2">Products</MudNavLink>
+        <MudNavLink Href="orders" Icon="@Icons.Material.Outlined.ReceiptLong">Orders</MudNavLink>
+        <MudNavLink Href="blog" Icon="@Icons.Material.Outlined.Article">Blog</MudNavLink>
+        <MudNavLink Href="reports" Icon="@Icons.Material.Outlined.Insights">Reports</MudNavLink>
     </MudNavMenu>
 
     <MudDivider />
@@ -27,6 +27,6 @@
     private async Task LogoutAsync()
     {
         await AuthService.LogoutAsync();
-        NavigationManager.NavigateTo("/login", true);
+        NavigationManager.NavigateTo("login", true);
     }
 }
