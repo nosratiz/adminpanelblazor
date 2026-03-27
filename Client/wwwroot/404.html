@@ -6,7 +6,12 @@
     <title>SampleBlazor Admin</title>
     <base href="/" />
     <script>
-        var pathSegmentsToKeep = 0;
+        var basePath = document.querySelector("base").getAttribute("href");
+        var pathSegmentsToKeep = basePath
+            .replace(/^\/+|\/+$/g, "")
+            .split("/")
+            .filter(Boolean)
+            .length;
         var locationData = window.location;
         var redirectPath = locationData.pathname
             .slice(1)
